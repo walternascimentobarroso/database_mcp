@@ -2,6 +2,7 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+import ssl
 from typing import Any
 
 import aiomysql
@@ -16,10 +17,30 @@ class MySQLConnectionPool:
         self._config = config
         self._pool: aiomysql.Pool | None = None
 
+    def _build_ssl_context(self) -> ssl.SSLContext | None:
+        """Build an SSL context for MySQL connections when enabled."""
+        if not self._config.ssl_enabled:
+            return None
+
+        ca_file = self._config.ssl_ca or None
+        context = ssl.create_default_context(cafile=ca_file)
+        if self._config.ssl_cert and self._config.ssl_key:
+            context.load_cert_chain(
+                certfile=self._config.ssl_cert,
+                keyfile=self._config.ssl_key,
+            )
+
+        if not self._config.ssl_verify_cert:
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+
+        return context
+
     async def start(self) -> None:
         """Create the connection pool."""
         if self._pool is not None:
             return
+        ssl_context = self._build_ssl_context()
         self._pool = await aiomysql.create_pool(
             host=self._config.host,
             port=self._config.port,
@@ -29,6 +50,7 @@ class MySQLConnectionPool:
             minsize=1,
             maxsize=self._config.pool_size,
             autocommit=True,
+            ssl=ssl_context,
         )
 
     async def close(self) -> None:

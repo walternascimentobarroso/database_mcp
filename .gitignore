@@ -11,6 +11,7 @@ __pycache__
 .coverage-*.yaml
 .coverage-*.yml
 uv.lock
+*.egg-info/
 
 # Ignore cursor AI rules
 .cursor/rules/codacy.mdc

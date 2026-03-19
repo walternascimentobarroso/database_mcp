@@ -32,3 +32,8 @@ class MySQLConfig(BaseSettings):
     database: str = ""
     pool_size: int = 5
     allow_write: bool = False
+    ssl_enabled: bool = False
+    ssl_verify_cert: bool = True
+    ssl_ca: str = ""
+    ssl_cert: str = ""
+    ssl_key: str = ""

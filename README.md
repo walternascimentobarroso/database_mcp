@@ -16,10 +16,13 @@ cd /Users/macbook/projets/MCP/mysql
 uv sync
 ```
 
-This creates the virtual environment (`.venv`) and installs dependencies. To run commands inside the environment:
+This creates the virtual environment (`.venv`) and installs dependencies.
+No `pip` step is required.
+
+To validate locally:
 
 ```bash
-uv run python -m mysql_mcp
+uv run env PYTHONPATH=src python -m mysql_mcp
 ```
 
 ## Configuration
@@ -44,6 +47,11 @@ Environment variables (or `.env` file):
 | `MYSQL_DATABASE` | No | Default database | - |
 | `MYSQL_POOL_SIZE` | No | Connection pool size | 5 |
 | `MYSQL_ALLOW_WRITE` | No | Allow INSERT/UPDATE/DELETE | false |
+| `MYSQL_SSL_ENABLED` | No | Enable TLS/SSL for MySQL connection | false |
+| `MYSQL_SSL_VERIFY_CERT` | No | Validate server certificate chain | true |
+| `MYSQL_SSL_CA` | No | Path to CA bundle (recommended in prod) | - |
+| `MYSQL_SSL_CERT` | No | Client certificate path (for mTLS) | - |
+| `MYSQL_SSL_KEY` | No | Client private key path (for mTLS) | - |
 
 Security details
 
@@ -67,6 +75,24 @@ MYSQL_DATABASE=database
 MYSQL_ALLOW_WRITE=false
 ```
 
+Production note (require_secure_transport=ON)
+
+If your MySQL server enforces secure transport (`--require_secure_transport=ON`),
+you must enable TLS:
+
+```bash
+MYSQL_SSL_ENABLED=true
+MYSQL_SSL_VERIFY_CERT=true
+MYSQL_SSL_CA=/absolute/path/to/ca.pem
+```
+
+If your database requires mTLS, also set:
+
+```bash
+MYSQL_SSL_CERT=/absolute/path/to/client-cert.pem
+MYSQL_SSL_KEY=/absolute/path/to/client-key.pem
+```
+
 Cursor note (`mcp.json`)
 
 If you are using Cursor, the most common setup is to configure `MYSQL_*` directly in the `env` of the `mysql` server block inside `/Users/macbook/.cursor/mcp.json` (as shown in the Cursor example below).
@@ -77,19 +103,19 @@ This avoids relying on the local `.env` file for credentials.
 **STDIO (e.g. Claude Desktop, Cursor):**
 
 ```bash
-uv run env PYTHONPATH=src python -m mysql_mcp
+/usr/bin/env PYTHONPATH=/Users/macbook/projets/MCP/mysql/src /Users/macbook/projets/MCP/mysql/.venv/bin/python -m mysql_mcp
 ```
 
-Or with `uvx` (no clone required):
+Alternative:
 
 ```bash
-uvx --from . env PYTHONPATH=src python -m mysql_mcp
+uv run env PYTHONPATH=src python -m mysql_mcp
 ```
 
 **HTTP (port 8000):**
 
 ```bash
-uv run env PYTHONPATH=src python -c "from mysql_mcp.server import run; run(transport='http', port=8000)"
+/Users/macbook/projets/MCP/mysql/.venv/bin/python -c "from mysql_mcp.server import run; run(transport='http', port=8000)"
 ```
 
 Or with the FastMCP CLI:
@@ -119,11 +145,15 @@ If you use Cursor global configuration, edit `/Users/macbook/.cursor/mcp.json` (
 {
   "mcpServers": {
     "mysql": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "mysql_mcp"],
+      "command": "/usr/bin/env",
+      "args": [
+        "PYTHONPATH=/Users/macbook/projets/MCP/mysql/src",
+        "/Users/macbook/projets/MCP/mysql/.venv/bin/python",
+        "-m",
+        "mysql_mcp"
+      ],
       "cwd": "/Users/macbook/projets/MCP/mysql",
       "env": {
-        "PYTHONPATH": "src",
         "MYSQL_USER": "user",
         "MYSQL_PASSWORD": "password",
         "MYSQL_HOST": "127.0.0.1",
@@ -147,11 +177,15 @@ Example (3 server blocks, read-only by default):
 {
   "mcpServers": {
     "mysql_local": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "mysql_mcp"],
+      "command": "/usr/bin/env",
+      "args": [
+        "PYTHONPATH=/Users/macbook/projets/MCP/mysql/src",
+        "/Users/macbook/projets/MCP/mysql/.venv/bin/python",
+        "-m",
+        "mysql_mcp"
+      ],
       "cwd": "/Users/macbook/projets/MCP/mysql",
       "env": {
-        "PYTHONPATH": "src",
         "MYSQL_USER": "your_user",
         "MYSQL_PASSWORD": "your_password",
         "MYSQL_HOST": "127.0.0.1",
@@ -161,11 +195,15 @@ Example (3 server blocks, read-only by default):
       }
     },
     "mysql_staging": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "mysql_mcp"],
+      "command": "/usr/bin/env",
+      "args": [
+        "PYTHONPATH=/Users/macbook/projets/MCP/mysql/src",
+        "/Users/macbook/projets/MCP/mysql/.venv/bin/python",
+        "-m",
+        "mysql_mcp"
+      ],
       "cwd": "/Users/macbook/projets/MCP/mysql",
       "env": {
-        "PYTHONPATH": "src",
         "MYSQL_USER": "your_user",
         "MYSQL_PASSWORD": "your_password",
         "MYSQL_HOST": "staging-db.example.com",
@@ -175,17 +213,24 @@ Example (3 server blocks, read-only by default):
       }
     },
     "mysql_prod": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "mysql_mcp"],
+      "command": "/usr/bin/env",
+      "args": [
+        "PYTHONPATH=/Users/macbook/projets/MCP/mysql/src",
+        "/Users/macbook/projets/MCP/mysql/.venv/bin/python",
+        "-m",
+        "mysql_mcp"
+      ],
       "cwd": "/Users/macbook/projets/MCP/mysql",
       "env": {
-        "PYTHONPATH": "src",
         "MYSQL_USER": "your_user",
         "MYSQL_PASSWORD": "your_password",
         "MYSQL_HOST": "prod-db.example.com",
         "MYSQL_PORT": "3306",
         "MYSQL_DATABASE": "database",
-        "MYSQL_ALLOW_WRITE": "false"
+        "MYSQL_ALLOW_WRITE": "false",
+        "MYSQL_SSL_ENABLED": "true",
+        "MYSQL_SSL_VERIFY_CERT": "true",
+        "MYSQL_SSL_CA": "/absolute/path/to/ca.pem"
       }
     }
   }
@@ -195,12 +240,13 @@ Example (3 server blocks, read-only by default):
 Notes:
 - For `stdio`, do not set `transport=http` and do not provide `port`.
 - If you removed the project `.env`, it is still fine: `MYSQL_*` must be provided via `env` in `mcp.json` (as shown above).
+- Recommended startup in MCP clients is setting `PYTHONPATH` directly in `command/args` (via `/usr/bin/env`), because some clients do not consistently apply `env.PYTHONPATH`.
 
 Option A (recommended) - using `uv`:
 - **Command:** `uv`
-- **Args:** `run`, `python`, `-m`, `mysql_mcp`
+- **Args:** `run`, `env`, `PYTHONPATH=src`, `python`, `-m`, `mysql_mcp`
 - **Cwd:** project directory (where `pyproject.toml` lives)
-- **Env:** set `MYSQL_USER`, `MYSQL_PASSWORD`, and optionally `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_ALLOW_WRITE`
+- **Env:** set `MYSQL_USER`, `MYSQL_PASSWORD`, and optionally `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_ALLOW_WRITE`, `MYSQL_SSL_*`
 
 Option B - using the `Makefile` shortcut:
 - **Command:** `make`
@@ -208,9 +254,9 @@ Option B - using the `Makefile` shortcut:
 - **Cwd:** project directory
 - **Env:** same values as Option A
 
-Alternative - using the venv interpreter (after `uv sync`):
-- **Command:** `.venv/bin/python` (or `\\.venv\\Scripts\\python.exe` on Windows)
-- **Args:** `-m`, `mysql_mcp`
+Alternative - using the venv interpreter directly:
+- **Command:** `/usr/bin/env`
+- **Args:** `PYTHONPATH=/absolute/path/to/project/src`, `.venv/bin/python`, `-m`, `mysql_mcp`
 
 ## License
 
