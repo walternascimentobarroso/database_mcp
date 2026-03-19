@@ -1,6 +1,7 @@
 """FastMCP server with MySQL tools."""
 
 from dataclasses import dataclass
+from typing import Literal
 
 from fastmcp import FastMCP
 
@@ -75,8 +76,7 @@ async def list_tables(database: str = "") -> list[str]:
 
 @mcp.tool(
     description=(
-        "Return column information (name, type, null, key, default, extra) "
-        "for a table."
+        "Return column information (name, type, null, key, default, extra) for a table."
     ),
 )
 async def describe_table(table: str, database: str = "") -> list[dict]:
@@ -110,7 +110,10 @@ async def execute_query(
     return await pool.execute(query, db=db)
 
 
-def run(transport: str = "stdio", port: int = 8000) -> None:
+TransportName = Literal["stdio", "http"]
+
+
+def run(transport: TransportName = "stdio", port: int = 8000) -> None:
     """Run the MCP server.
 
     Note: some FastMCP transports (e.g. `stdio`) do not accept `port`.
@@ -119,4 +122,3 @@ def run(transport: str = "stdio", port: int = 8000) -> None:
         mcp.run(transport=transport, port=port)
         return
     mcp.run(transport=transport)
-

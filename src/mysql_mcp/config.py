@@ -32,4 +32,3 @@ class MySQLConfig(BaseSettings):
     database: str = ""
     pool_size: int = 5
     allow_write: bool = False
-

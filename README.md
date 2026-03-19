@@ -118,14 +118,6 @@ If you use Cursor global configuration, edit `/Users/macbook/.cursor/mcp.json` (
 ```json
 {
   "mcpServers": {
-    "codacy": {
-      "command": "npx",
-      "args": ["-y", "@codacy/codacy-mcp@latest"]
-    },
-    "context7": {
-      "url": "https://mcp.context7.com/mcp",
-      "headers": {}
-    },
     "mysql": {
       "command": "uv",
       "args": ["run", "python", "-m", "mysql_mcp"],

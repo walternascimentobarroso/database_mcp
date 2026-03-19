@@ -68,4 +68,3 @@ class MySQLConnectionPool:
             if cur.description:
                 return list(await cur.fetchall())
             return []
-

@@ -47,9 +47,7 @@ class QuerySafetyChecker:
                 raise QuerySafetyError(message)
 
             if first_token in ("UPDATE", "DELETE") and "WHERE" not in sql.upper():
-                message = (
-                    "UPDATE and DELETE require an explicit WHERE clause."
-                )
+                message = "UPDATE and DELETE require an explicit WHERE clause."
                 raise QuerySafetyError(message)
 
             return
@@ -61,4 +59,3 @@ class QuerySafetyChecker:
 def get_checker(*, allow_write: bool) -> QuerySafetyChecker:
     """Return a QuerySafetyChecker instance."""
     return QuerySafetyChecker(allow_write=allow_write)
-
