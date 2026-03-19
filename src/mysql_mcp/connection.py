@@ -65,6 +65,4 @@ class MySQLConnectionPool:
         """Execute a query and return rows as list of dicts."""
         async with self.cursor(db=db) as cur:
             await cur.execute(sql, args or ())
-            if cur.description:
-                return list(await cur.fetchall())
-            return []
+            return list(await cur.fetchall()) if cur.description else []

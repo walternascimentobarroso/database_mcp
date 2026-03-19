@@ -1,4 +1,15 @@
 .venv/
+__pycache__
+.pytest_cache/
+.ruff_cache/
+.pyrightcache/
+.mypy_cache/
+.coverage
+.coverage.*
+.coverage-*.xml
+.coverage-*.json
+.coverage-*.yaml
+.coverage-*.yml
 uv.lock
 
 # Ignore cursor AI rules

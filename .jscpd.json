@@ -1,0 +1,19 @@
+{
+  "threshold": 0,
+  "reporters": ["console"],
+  "ignore": [
+    "**/tests/**",
+    "**/venv/**",
+    "**/.venv/**",
+    "**/.cache/**",
+    "**/node_modules/**",
+    "**/.cursor/**",
+    "**/specs/**",
+    "**/.specify/**",
+    "**/__pycache__/**",
+    "**/*.min.js"
+  ],
+  "format": ["python", "yaml", "markdown", "markup", "javascript", "json", "bash", "properties"],
+  "minLines": 5,
+  "minTokens": 50
+}
