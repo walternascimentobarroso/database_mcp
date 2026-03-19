@@ -86,6 +86,18 @@ MYSQL_SSL_VERIFY_CERT=true
 MYSQL_SSL_CA=/absolute/path/to/ca.pem
 ```
 
+If you do not have a CA certificate available yet, you can still use TLS encryption
+without certificate validation:
+
+```bash
+MYSQL_SSL_ENABLED=true
+MYSQL_SSL_VERIFY_CERT=false
+```
+
+This is useful as a temporary fallback, but it is less secure (susceptible to
+man-in-the-middle attacks). Prefer `MYSQL_SSL_VERIFY_CERT=true` with a valid CA
+bundle in production.
+
 If your database requires mTLS, also set:
 
 ```bash
