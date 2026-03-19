@@ -1,0 +1,165 @@
+# MySQL MCP (FastMCP)
+
+Python MCP server built with [FastMCP](https://gofastmcp.com/) to connect to MySQL. It exposes tools to list databases and tables, describe tables, and execute SQL queries (read-only by default).
+
+## Requirements
+
+- Python 3.10+
+- MySQL reachable (host, username, password)
+
+## Installation
+
+Requires [uv](https://docs.astral.sh/uv/). In the project directory:
+
+```bash
+cd /Users/macbook/projets/MCP/mysql
+uv sync
+```
+
+This creates the virtual environment (`.venv`) and installs dependencies. To run commands inside the environment:
+
+```bash
+uv run python -m mysql_mcp
+```
+
+## Configuration
+
+How the server reads credentials
+
+The server uses environment variables with prefix `MYSQL_`. The resolution happens in two layers:
+
+1. First: values provided to the process via `env` in Cursor `mcp.json` (or via shell/CI).
+2. Second (fallback): values from the project `.env` file, but only for fields that are not defined in the environment.
+
+This means that if you configure `MYSQL_USER` and `MYSQL_PASSWORD` in `mcp.json`, the project `.env` file will not override those values.
+
+Environment variables (or `.env` file):
+
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `MYSQL_USER` | Yes | MySQL username | - |
+| `MYSQL_PASSWORD` | Yes | Password | - |
+| `MYSQL_HOST` | No | Host | 127.0.0.1 |
+| `MYSQL_PORT` | No | Port | 3306 |
+| `MYSQL_DATABASE` | No | Default database | - |
+| `MYSQL_POOL_SIZE` | No | Connection pool size | 5 |
+| `MYSQL_ALLOW_WRITE` | No | Allow INSERT/UPDATE/DELETE | false |
+
+Security details
+
+By default, the server only accepts read-only queries (for example: `SELECT`, `SHOW`, `DESCRIBE`).
+When `MYSQL_ALLOW_WRITE=true`, it also accepts `INSERT`, `UPDATE`, `DELETE`, and `REPLACE`.
+
+Additional rules:
+- `UPDATE` and `DELETE` require an explicit `WHERE` clause (otherwise the query is rejected).
+
+.env file (optional)
+
+If you want, create `/Users/macbook/projets/MCP/mysql/.env` using the same format as the variables above.
+You can use `/.env.example` in this repository as a reference.
+
+Minimum example (read-only):
+
+```bash
+MYSQL_USER=wesrocnet
+MYSQL_PASSWORD=wesrocnet
+MYSQL_DATABASE=wesrocnet
+MYSQL_ALLOW_WRITE=false
+```
+
+Cursor note (`mcp.json`)
+
+If you are using Cursor, the most common setup is to configure `MYSQL_*` directly in the `env` of the `mysql` server block inside `/Users/macbook/.cursor/mcp.json` (as shown in the Cursor example below).
+This avoids relying on the local `.env` file for credentials.
+
+## Running the server
+
+**STDIO (e.g. Claude Desktop, Cursor):**
+
+```bash
+uv run env PYTHONPATH=src python -m mysql_mcp
+```
+
+Or with `uvx` (no clone required):
+
+```bash
+uvx --from . env PYTHONPATH=src python -m mysql_mcp
+```
+
+**HTTP (port 8000):**
+
+```bash
+uv run env PYTHONPATH=src python -c "from mysql_mcp.server import run; run(transport='http', port=8000)"
+```
+
+Or with the FastMCP CLI:
+
+```bash
+uv run fastmcp run mysql_mcp.server:mcp --transport http --port 8000
+```
+
+## MCP Tools
+
+- **list_databases** - Lists all databases.
+- **list_tables** - Lists tables in a database (optional `database` parameter).
+- **describe_table** - Returns column information (name, type, null, key, default, extra) for a table.
+- **execute_query** - Executes a validated SQL query (following the security rules).
+
+## Cursor configuration example
+
+In **Cursor Settings > MCP**, add a server that will be started via **stdio**.
+
+Important: for **stdio**, do not set `transport=http` and do not provide `port`. The server uses `stdio` by default.
+
+### Example (JSON in `~/.cursor/mcp.json`)
+
+If you use Cursor global configuration, edit `/Users/macbook/.cursor/mcp.json` (or create a `.cursor/mcp.json` inside this project directory) and add a `mcpServers` entry like this:
+
+```json
+{
+  "mcpServers": {
+    "codacy": {
+      "command": "npx",
+      "args": ["-y", "@codacy/codacy-mcp@latest"]
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {}
+    },
+    "mysql": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "mysql_mcp"],
+      "cwd": "/Users/macbook/projets/MCP/mysql",
+      "env": {
+        "PYTHONPATH": "src",
+        "MYSQL_USER": "wesrocnet",
+        "MYSQL_PASSWORD": "wesrocnet",
+        "MYSQL_HOST": "127.0.0.1",
+        "MYSQL_PORT": "3306",
+        "MYSQL_DATABASE": "wesrocnet",
+        "MYSQL_ALLOW_WRITE": "false"
+      }
+    }
+  }
+}
+```
+
+Option A (recommended) - using `uv`:
+- **Command:** `uv`
+- **Args:** `run`, `python`, `-m`, `mysql_mcp`
+- **Cwd:** project directory (where `pyproject.toml` lives)
+- **Env:** set `MYSQL_USER`, `MYSQL_PASSWORD`, and optionally `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_ALLOW_WRITE`
+
+Option B - using the `Makefile` shortcut:
+- **Command:** `make`
+- **Args:** `up`
+- **Cwd:** project directory
+- **Env:** same values as Option A
+
+Alternative - using the venv interpreter (after `uv sync`):
+- **Command:** `.venv/bin/python` (or `\\.venv\\Scripts\\python.exe` on Windows)
+- **Args:** `-m`, `mysql_mcp`
+
+## License
+
+MIT.
