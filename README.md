@@ -61,9 +61,9 @@ You can use `/.env.example` in this repository as a reference.
 Minimum example (read-only):
 
 ```bash
-MYSQL_USER=wesrocnet
-MYSQL_PASSWORD=wesrocnet
-MYSQL_DATABASE=wesrocnet
+MYSQL_USER=user
+MYSQL_PASSWORD=password
+MYSQL_DATABASE=database
 MYSQL_ALLOW_WRITE=false
 ```
 
@@ -124,11 +124,11 @@ If you use Cursor global configuration, edit `/Users/macbook/.cursor/mcp.json` (
       "cwd": "/Users/macbook/projets/MCP/mysql",
       "env": {
         "PYTHONPATH": "src",
-        "MYSQL_USER": "wesrocnet",
-        "MYSQL_PASSWORD": "wesrocnet",
+        "MYSQL_USER": "user",
+        "MYSQL_PASSWORD": "password",
         "MYSQL_HOST": "127.0.0.1",
         "MYSQL_PORT": "3306",
-        "MYSQL_DATABASE": "wesrocnet",
+        "MYSQL_DATABASE": "database",
         "MYSQL_ALLOW_WRITE": "false"
       }
     }
@@ -156,7 +156,7 @@ Example (3 server blocks, read-only by default):
         "MYSQL_PASSWORD": "your_password",
         "MYSQL_HOST": "127.0.0.1",
         "MYSQL_PORT": "3306",
-        "MYSQL_DATABASE": "wesrocnet",
+        "MYSQL_DATABASE": "database",
         "MYSQL_ALLOW_WRITE": "false"
       }
     },
@@ -170,7 +170,7 @@ Example (3 server blocks, read-only by default):
         "MYSQL_PASSWORD": "your_password",
         "MYSQL_HOST": "staging-db.example.com",
         "MYSQL_PORT": "3306",
-        "MYSQL_DATABASE": "wesrocnet",
+        "MYSQL_DATABASE": "database",
         "MYSQL_ALLOW_WRITE": "false"
       }
     },
@@ -184,7 +184,7 @@ Example (3 server blocks, read-only by default):
         "MYSQL_PASSWORD": "your_password",
         "MYSQL_HOST": "prod-db.example.com",
         "MYSQL_PORT": "3306",
-        "MYSQL_DATABASE": "wesrocnet",
+        "MYSQL_DATABASE": "database",
         "MYSQL_ALLOW_WRITE": "false"
       }
     }
