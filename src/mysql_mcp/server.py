@@ -113,12 +113,16 @@ async def execute_query(
 TransportName = Literal["stdio", "http"]
 
 
-def run(transport: TransportName = "stdio", port: int = 8000) -> None:
+def run(
+    transport: TransportName = "stdio",
+    host: str = "127.0.0.1",
+    port: int = 8000,
+) -> None:
     """Run the MCP server.
 
     Note: some FastMCP transports (e.g. `stdio`) do not accept `port`.
     """
     if transport == "http":
-        mcp.run(transport=transport, port=port)
+        mcp.run(transport=transport, host=host, port=port)
         return
     mcp.run(transport=transport)

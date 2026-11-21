@@ -1,8 +1,10 @@
 import secrets
-
-import pytest
+from typing import TYPE_CHECKING
 
 from mysql_mcp.config import MySQLConfig
+
+if TYPE_CHECKING:
+    import pytest
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 3306

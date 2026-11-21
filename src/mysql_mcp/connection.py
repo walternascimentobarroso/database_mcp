@@ -1,13 +1,15 @@
 """Async MySQL connection pool."""
 
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 import ssl
-from typing import Any
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, Any
 
 import aiomysql
 
-from mysql_mcp.config import MySQLConfig
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from mysql_mcp.config import MySQLConfig
 
 
 class MySQLConnectionPool:
@@ -62,7 +64,7 @@ class MySQLConnectionPool:
         self._pool = None
 
     @asynccontextmanager
-    async def cursor(self, db: str | None = None) -> AsyncIterator[aiomysql.Cursor]:
+    async def cursor(self, db: str | None = None) -> AsyncGenerator[aiomysql.Cursor]:
         """Yield a cursor, optionally using a specific database."""
         if self._pool is None:
             await self.start()

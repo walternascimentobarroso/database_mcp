@@ -1,12 +1,14 @@
 import asyncio
 import importlib
 import runpy
-from collections.abc import Awaitable, Callable
-from typing import Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import pytest
 
 import mysql_mcp.server as server_mod
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
 
 HTTP_PORT = 8123
 
