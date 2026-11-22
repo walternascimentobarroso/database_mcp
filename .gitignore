@@ -10,7 +10,6 @@ __pycache__
 .coverage-*.json
 .coverage-*.yaml
 .coverage-*.yml
-uv.lock
 *.egg-info/
 
 # Ignore cursor AI rules
