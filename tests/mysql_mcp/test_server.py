@@ -1,5 +1,7 @@
 import asyncio
 import importlib
+import json
+import os
 import runpy
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
@@ -9,8 +11,10 @@ import mysql_mcp.server as server_mod
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
+    from pathlib import Path
 
 HTTP_PORT = 8123
+CONFIG_CHANGES = 3
 
 
 def _check(*, condition: bool, message: str) -> None:
@@ -75,6 +79,9 @@ class _FakeMySQLConnectionPool:
 
     async def execute(self, sql: str, db: str | None = None) -> list[dict[str, Any]]:
         return await self._pool.execute(sql, db=db)
+
+    async def close(self) -> None:
+        return None
 
 
 def test_run_stdio_and_http(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -190,6 +197,53 @@ def test_tools_end_to_end_with_cached_pool(monkeypatch: pytest.MonkeyPatch) -> N
     _check(
         condition=calls["count"] == 1,
         message="Expected cached pool to be created once.",
+    )
+
+
+def test_config_file_overrides_env_and_reloads_on_change(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    srv = _fresh_server_module()
+    config_file = tmp_path / "mysql.json"
+    monkeypatch.setenv("MYSQL_CONFIG_FILE", str(config_file))
+    monkeypatch.setenv("MYSQL_USER", "env_user")
+    monkeypatch.setenv("MYSQL_PASSWORD", "env_pass")
+    monkeypatch.setenv("MYSQL_ALLOW_WRITE", "false")
+
+    configs: list[Any] = []
+
+    class _PoolFactory(_FakeMySQLConnectionPool):
+        def __init__(self, cfg: object) -> None:
+            configs.append(cfg)
+            super().__init__(cfg)
+
+    monkeypatch.setattr(srv, "MySQLConnectionPool", _PoolFactory)
+
+    async def _run() -> None:
+        await srv.list_databases()
+        config_file.write_text(
+            json.dumps({"user": "file_user", "password": "", "allow_write": True}),
+        )
+        await srv.list_databases()
+        await srv.list_databases()
+        os.utime(config_file, (1, 1))
+        await srv.list_databases()
+
+    asyncio.run(_run())
+    _check(
+        condition=len(configs) == CONFIG_CHANGES,
+        message="Expected one pool per config change.",
+    )
+    _check(condition=configs[0].user == "env_user", message="Expected env config.")
+    _check(condition=configs[1].user == "file_user", message="Expected file user.")
+    _check(
+        condition=configs[1].password == "env_pass",  # noqa: S105
+        message="Expected empty file field to fall back to env.",
+    )
+    _check(
+        condition=configs[1].allow_write is False,
+        message="Expected allow_write to be ignored from the file.",
     )
 
 

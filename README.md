@@ -51,6 +51,7 @@ Environment variables (or `.env` file):
 | `MYSQL_SSL_CA` | No | Path to CA bundle (recommended in prod) | - |
 | `MYSQL_SSL_CERT` | No | Client certificate path (for mTLS) | - |
 | `MYSQL_SSL_KEY` | No | Client private key path (for mTLS) | - |
+| `MYSQL_CONFIG_FILE` | No | JSON file overriding `host`, `port`, `user`, `password`, `database` (never `allow_write`); the pool is rebuilt when the file changes | - |
 
 Security details
 

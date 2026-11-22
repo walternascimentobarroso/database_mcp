@@ -1,6 +1,9 @@
 """FastMCP server with MySQL tools."""
 
+import json
+import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 from fastmcp import FastMCP
@@ -18,17 +21,44 @@ class _State:
 
     pool: MySQLConnectionPool | None = None
     config: MySQLConfig | None = None
+    config_file_mtime: float | None = None
 
 
 _state = _State()
 
+_FILE_FIELDS = ("host", "port", "user", "password", "database")
+
+
+def _config_file() -> Path | None:
+    path = os.environ.get("MYSQL_CONFIG_FILE", "")
+    return Path(path) if path and Path(path).is_file() else None
+
+
+def _load_config() -> MySQLConfig:
+    """Env config, overridden by the connection fields of MYSQL_CONFIG_FILE."""
+    path = _config_file()
+    if path is None:
+        return MySQLConfig()
+    values = json.loads(path.read_text(encoding="utf-8"))
+    # allow_write is never read from the file: a web form must not enable writes.
+    return MySQLConfig(**{k: values[k] for k in _FILE_FIELDS if values.get(k)})
+
+
+def _config_file_mtime() -> float | None:
+    path = _config_file()
+    return path.stat().st_mtime if path else None
+
 
 async def _get_pool() -> MySQLConnectionPool:
-    """Return or create the connection pool (lazy init)."""
-    if _state.pool is not None:
+    """Return or create the connection pool; rebuild it when the config file changes."""
+    mtime = _config_file_mtime()
+    if _state.pool is not None and mtime == _state.config_file_mtime:
         return _state.pool
+    if _state.pool is not None:
+        await _state.pool.close()
+        _state.pool = None
 
-    config = MySQLConfig()
+    config = _load_config()
     if not config.user or not config.password:
         message = "MYSQL_USER and MYSQL_PASSWORD are required."
         raise ValueError(message)
@@ -37,6 +67,7 @@ async def _get_pool() -> MySQLConnectionPool:
     await pool.start()
     _state.pool = pool
     _state.config = config
+    _state.config_file_mtime = mtime
     return pool
 
 
