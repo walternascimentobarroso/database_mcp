@@ -4,7 +4,7 @@ Python MCP server built with [FastMCP](https://gofastmcp.com/) to connect to MyS
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.14+
 - MySQL reachable (host, username, password)
 
 ## Installation
@@ -12,8 +12,7 @@ Python MCP server built with [FastMCP](https://gofastmcp.com/) to connect to MyS
 Requires [uv](https://docs.astral.sh/uv/). In the project directory:
 
 ```bash
-cd /Users/macbook/projets/MCP/mysql
-uv sync
+uv sync          # or: make sync (includes dev tools)
 ```
 
 This creates the virtual environment (`.venv`) and installs dependencies.
@@ -63,7 +62,7 @@ Additional rules:
 
 .env file (optional)
 
-If you want, create `/Users/macbook/projets/MCP/mysql/.env` using the same format as the variables above.
+If you want, create `/path/to/mysql-mcp/.env` using the same format as the variables above.
 You can use `/.env.example` in this repository as a reference.
 
 Minimum example (read-only):
@@ -107,7 +106,7 @@ MYSQL_SSL_KEY=/absolute/path/to/client-key.pem
 
 Cursor note (`mcp.json`)
 
-If you are using Cursor, the most common setup is to configure `MYSQL_*` directly in the `env` of the `mysql` server block inside `/Users/macbook/.cursor/mcp.json` (as shown in the Cursor example below).
+If you are using Cursor, the most common setup is to configure `MYSQL_*` directly in the `env` of the `mysql` server block inside `~/.cursor/mcp.json` (as shown in the Cursor example below).
 This avoids relying on the local `.env` file for credentials.
 
 ## Running the server
@@ -115,7 +114,7 @@ This avoids relying on the local `.env` file for credentials.
 **STDIO (e.g. Claude Desktop, Cursor):**
 
 ```bash
-/usr/bin/env PYTHONPATH=/Users/macbook/projets/MCP/mysql/src /Users/macbook/projets/MCP/mysql/.venv/bin/python -m mysql_mcp
+/usr/bin/env PYTHONPATH=/path/to/mysql-mcp/src /path/to/mysql-mcp/.venv/bin/python -m mysql_mcp
 ```
 
 Alternative:
@@ -127,7 +126,7 @@ uv run env PYTHONPATH=src python -m mysql_mcp
 **HTTP (port 8000):**
 
 ```bash
-/Users/macbook/projets/MCP/mysql/.venv/bin/python -c "from mysql_mcp.server import run; run(transport='http', port=8000)"
+/path/to/mysql-mcp/.venv/bin/python -c "from mysql_mcp.server import run; run(transport='http', port=8000)"
 ```
 
 Or with the FastMCP CLI:
@@ -135,6 +134,36 @@ Or with the FastMCP CLI:
 ```bash
 uv run fastmcp run mysql_mcp.server:mcp --transport http --port 8000
 ```
+
+**Docker (HTTP on port 8000):**
+
+```bash
+docker build -t mysql-mcp .
+docker run --rm -p 8000:8000 --env-file .env mysql-mcp
+```
+
+The entry point reads `MCP_TRANSPORT` (`stdio` | `http`, default `stdio`), `MCP_HOST` (default `127.0.0.1`) and `MCP_PORT` (default `8000`); the image sets them to `http`, `0.0.0.0`, `8000`.
+
+## Development
+
+```bash
+make sync       # install dependencies, including dev tools
+make test       # pytest with coverage
+make lint       # ruff check
+make format     # ruff format
+make typecheck  # pyright
+make validate   # format + lint + typecheck + duplication check + tests
+```
+
+Project layout:
+
+- `src/mysql_mcp/config.py` - settings (`MYSQL_*`)
+- `src/mysql_mcp/connection.py` - aiomysql pool and TLS
+- `src/mysql_mcp/query_safety.py` - SQL validation
+- `src/mysql_mcp/server.py` - MCP tools
+- `tests/mysql_mcp/` - one test file per module
+
+Contributor and AI agent rules live in [CLAUDE.md](CLAUDE.md).
 
 ## MCP Tools
 
@@ -151,7 +180,7 @@ Important: for **stdio**, do not set `transport=http` and do not provide `port`.
 
 ### Example (JSON in `~/.cursor/mcp.json`)
 
-If you use Cursor global configuration, edit `/Users/macbook/.cursor/mcp.json` (or create a `.cursor/mcp.json` inside this project directory) and add a `mcpServers` entry like this:
+If you use Cursor global configuration, edit `~/.cursor/mcp.json` (or create a `.cursor/mcp.json` inside this project directory) and add a `mcpServers` entry like this:
 
 ```json
 {
@@ -159,12 +188,12 @@ If you use Cursor global configuration, edit `/Users/macbook/.cursor/mcp.json` (
     "mysql": {
       "command": "/usr/bin/env",
       "args": [
-        "PYTHONPATH=/Users/macbook/projets/MCP/mysql/src",
-        "/Users/macbook/projets/MCP/mysql/.venv/bin/python",
+        "PYTHONPATH=/path/to/mysql-mcp/src",
+        "/path/to/mysql-mcp/.venv/bin/python",
         "-m",
         "mysql_mcp"
       ],
-      "cwd": "/Users/macbook/projets/MCP/mysql",
+      "cwd": "/path/to/mysql-mcp",
       "env": {
         "MYSQL_USER": "user",
         "MYSQL_PASSWORD": "password",
@@ -181,7 +210,7 @@ If you use Cursor global configuration, edit `/Users/macbook/.cursor/mcp.json` (
 ### Per-project (recommended) - 3 environments
 You can configure multiple MySQL targets per workspace by creating/updating:
 
-- `/Users/macbook/projets/MCP/mysql/.cursor/mcp.json`
+- `/path/to/mysql-mcp/.cursor/mcp.json`
 
 Example (3 server blocks, read-only by default):
 
@@ -191,12 +220,12 @@ Example (3 server blocks, read-only by default):
     "mysql_local": {
       "command": "/usr/bin/env",
       "args": [
-        "PYTHONPATH=/Users/macbook/projets/MCP/mysql/src",
-        "/Users/macbook/projets/MCP/mysql/.venv/bin/python",
+        "PYTHONPATH=/path/to/mysql-mcp/src",
+        "/path/to/mysql-mcp/.venv/bin/python",
         "-m",
         "mysql_mcp"
       ],
-      "cwd": "/Users/macbook/projets/MCP/mysql",
+      "cwd": "/path/to/mysql-mcp",
       "env": {
         "MYSQL_USER": "your_user",
         "MYSQL_PASSWORD": "your_password",
@@ -209,12 +238,12 @@ Example (3 server blocks, read-only by default):
     "mysql_staging": {
       "command": "/usr/bin/env",
       "args": [
-        "PYTHONPATH=/Users/macbook/projets/MCP/mysql/src",
-        "/Users/macbook/projets/MCP/mysql/.venv/bin/python",
+        "PYTHONPATH=/path/to/mysql-mcp/src",
+        "/path/to/mysql-mcp/.venv/bin/python",
         "-m",
         "mysql_mcp"
       ],
-      "cwd": "/Users/macbook/projets/MCP/mysql",
+      "cwd": "/path/to/mysql-mcp",
       "env": {
         "MYSQL_USER": "your_user",
         "MYSQL_PASSWORD": "your_password",
@@ -227,12 +256,12 @@ Example (3 server blocks, read-only by default):
     "mysql_prod": {
       "command": "/usr/bin/env",
       "args": [
-        "PYTHONPATH=/Users/macbook/projets/MCP/mysql/src",
-        "/Users/macbook/projets/MCP/mysql/.venv/bin/python",
+        "PYTHONPATH=/path/to/mysql-mcp/src",
+        "/path/to/mysql-mcp/.venv/bin/python",
         "-m",
         "mysql_mcp"
       ],
-      "cwd": "/Users/macbook/projets/MCP/mysql",
+      "cwd": "/path/to/mysql-mcp",
       "env": {
         "MYSQL_USER": "your_user",
         "MYSQL_PASSWORD": "your_password",
